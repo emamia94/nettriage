@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>NetTriage.Cli</RootNamespace>
+    <AssemblyName>nettriage</AssemblyName>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>nettriage</ToolCommandName>
+    <PackageId>NetTriage</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Ema</Authors>
+    <Description>Deterministic, offline triage for .NET Framework to modern .NET migrations. Finds WebForms, server-side WCF, .NET Remoting, AppDomain, Workflow Foundation, BinaryFormatter, EF6 and other porting blockers across an entire solution or estate, then sequences the work.</Description>
+    <PackageTags>dotnet;migration;modernization;legacy;dotnet-framework;roslyn;triage;upgrade</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryType>git</RepositoryType>
+    <PackageOutputPath>../../artifacts</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../NetTriage.Core/NetTriage.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" Condition="Exists('../../README.md')" />
+  </ItemGroup>
+
+</Project>

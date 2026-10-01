@@ -1,0 +1,25 @@
+## Build output
+bin/
+obj/
+artifacts/
+*.user
+*.suo
+.vs/
+*.binlog
+
+## Test and coverage output
+TestResults/
+*.trx
+*.coverage
+
+## NuGet
+*.nupkg
+*.snupkg
+
+## Rider / VS Code
+.idea/
+.vscode/
+
+## OS noise
+.DS_Store
+Thumbs.db

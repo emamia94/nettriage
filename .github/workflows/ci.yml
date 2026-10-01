@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore NetTriage.slnx
+
+      - name: Build
+        run: dotnet build NetTriage.slnx -c Release --no-restore
+
+      # The test project is a Microsoft.Testing.Platform executable; running it directly is
+      # the most portable way to execute the suite across SDK versions.
+      - name: Test
+        run: dotnet run --project tests/NetTriage.Tests -c Release --no-build
+
+      - name: Pack
+        run: dotnet pack src/NetTriage.Cli/NetTriage.Cli.csproj -c Release --no-build -o artifacts
+
+      - name: Smoke-test the packed tool
+        run: |
+          dotnet tool install --global --add-source ./artifacts NetTriage
+          nettriage version
+          nettriage scan . --format json -o /tmp/selftest.json --quiet
+          test -s /tmp/selftest.json
+          echo "nettriage scanned its own repository successfully"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: artifacts/*.nupkg
