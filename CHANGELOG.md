@@ -3,6 +3,21 @@
 All notable changes to this project are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+Vendor tooling only. Nothing in the shipped package changes.
+
+### Added
+
+- **Licence fulfilment** (`tools/NetTriage.Fulfilment`). Turns a paid Polar order into a delivered
+  licence file with no human in the loop: it reads paid orders since its cursor, mints the licence
+  locally with the private key, emails it to the customer, and records it. Renewals are handled by
+  the same path, because Polar turns a renewal into another paid order and the expiry comes from
+  the subscription's new period end. It is idempotent, it stops at the first failure instead of
+  skipping ahead, and it exits non-zero so a scheduled run cannot fail silently.
+- `replay` and a `file` mail mode, so the whole pipeline can be rehearsed over recorded orders
+  without contacting a customer or a mail server.
+
 ## [0.2.1] - 2026-10-02
 
 Packaging fix. No behaviour change; the detectors, the analysis and the licence format are

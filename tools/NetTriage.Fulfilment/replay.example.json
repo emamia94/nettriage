@@ -1,0 +1,55 @@
+{
+  "//": [
+    "Recorded orders in Polar's own JSON shape, for rehearsing the fulfilment path without a live sale.",
+    "Usage: nettriage-fulfilment replay replay.example.json   (with mail.mode = \"file\")"
+  ],
+
+  "orders": [
+    {
+      "id": "ord_example_first_purchase",
+      "created_at": "2026-10-05T09:12:00Z",
+      "status": "paid",
+      "paid": true,
+      "billing_reason": "subscription_create",
+      "subscription_id": "sub_example_2026",
+      "customer_id": "cus_example",
+      "customer": {
+        "id": "cus_example",
+        "email": "buyer@example.com",
+        "name": "Acme Ltd",
+        "billing_name": "Acme Limited"
+      },
+      "custom_field_data": { "organisation": "Acme Ltd" }
+    },
+    {
+      "id": "ord_example_renewal",
+      "created_at": "2027-10-05T09:12:00Z",
+      "status": "paid",
+      "paid": true,
+      "billing_reason": "subscription_cycle",
+      "subscription_id": "sub_example_2027",
+      "customer_id": "cus_example",
+      "customer": {
+        "id": "cus_example",
+        "email": "buyer@example.com",
+        "name": "Acme Ltd"
+      },
+      "custom_field_data": { "organisation": "Acme Ltd" }
+    }
+  ],
+
+  "subscriptions": [
+    {
+      "id": "sub_example_2026",
+      "status": "active",
+      "current_period_end": "2027-10-05T00:00:00Z",
+      "cancel_at_period_end": false
+    },
+    {
+      "id": "sub_example_2027",
+      "status": "active",
+      "current_period_end": "2028-10-05T00:00:00Z",
+      "cancel_at_period_end": false
+    }
+  ]
+}

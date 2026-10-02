@@ -1,0 +1,43 @@
+{
+  "//": [
+    "Configuration for nettriage-fulfilment. Copy to ~/.nettriage-fulfilment/config.json and fill in.",
+    "Every secret is referenced by PATH, never by value: this file can sit next to the keys without",
+    "becoming a secret itself. Run `nettriage-fulfilment check` after editing."
+  ],
+
+  "polar": {
+    "baseUrl": "https://api.polar.sh",
+    "tokenFile": "/opt/data/api_keys/polar_sh_api_key_senza_scadenza.txt",
+    "productId": "c2d0a732-5f46-41d7-aa9a-35f2fe72184a"
+  },
+
+  "signing": {
+    "privateKeyPath": "/opt/data/.nettriage-keys/nettriage-signing-private.pem"
+  },
+
+  "mail": {
+    "//": "mode 'file' writes the exact message to a directory instead of sending it. Use it to rehearse.",
+    "mode": "file",
+    "from": "nettriage <licences@example.com>",
+    "replyTo": "",
+    "fileDirectory": "/opt/data/.nettriage-fulfilment/outbox",
+    "smtp": {
+      "host": "smtp.gmail.com",
+      "port": 587,
+      "user": "you@example.com",
+      "passwordFile": "/opt/data/.nettriage-fulfilment/smtp-password.txt",
+      "password": "",
+      "useStartTls": true
+    }
+  },
+
+  "licence": {
+    "//": "Grace days are added on top of the paid period so a renewal that settles a day late never locks anyone out.",
+    "edition": "team",
+    "fallbackDays": 365,
+    "graceDays": 14
+  },
+
+  "statePath": "/opt/data/.nettriage-fulfilment/state.json",
+  "issuedDirectory": "/opt/data/.nettriage-fulfilment/issued"
+}

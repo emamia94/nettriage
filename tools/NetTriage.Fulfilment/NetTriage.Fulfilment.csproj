@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>NetTriage.Fulfilment</RootNamespace>
+    <AssemblyName>nettriage-fulfilment</AssemblyName>
+    <!-- Vendor tooling: never packed, never published. -->
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/NetTriage.Core/NetTriage.Core.csproj" />
+  </ItemGroup>
+
+</Project>
