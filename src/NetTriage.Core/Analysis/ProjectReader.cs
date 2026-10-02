@@ -13,8 +13,11 @@ public static class ProjectReader
     private static readonly string[] AsmxExtensions = { ".asmx" };
     private static readonly string[] WcfExtensions = { ".svc" };
 
-    public static ProjectReport Read(string projectPath, string rootPath, List<string> warnings)
+    public static ProjectReport Read(
+        string projectPath, string rootPath, List<string> warnings, DetectorSet? detectors = null)
     {
+        var set = detectors ?? DetectorSet.BuiltIn;
+
         var report = new ProjectReport
         {
             Name = Path.GetFileNameWithoutExtension(projectPath),
@@ -92,21 +95,34 @@ public static class ProjectReader
             }
         }
 
-        foreach (var detector in DetectorCatalog.All)
+        foreach (var detector in set.All)
         {
             if (detector.Names.Count == 0) continue;
 
-            var (count, first) = bag.ResolveAny(detector.Names);
-            if (count > 0 && first is not null) Raise(hits, detector.Code, count, first);
+            // A custom rule may be scoped to a subset of projects.
+            if (detector.ProjectGlob is { Length: > 0 } projectGlob
+                && !GlobMatcher.IsMatch(report.Path, projectGlob))
+            {
+                continue;
+            }
+
+            Func<string, bool>? fileFilter = detector.FileGlob is { Length: > 0 } fileGlob
+                ? file => GlobMatcher.IsMatch(file, fileGlob)
+                : null;
+
+            var (count, first) = bag.ResolveAnyWhere(detector.Names, fileFilter);
+            if (count > 0 && first is not null) Raise(hits, detector.Code, count, first, set);
         }
 
         // --- marker files discovered on disk (not only those listed in the project) ------
         ScanMarkerFilesOnDisk(directory, rootPath, hits);
 
         report.Hits = hits.Values
+            .Select(h => set.ById(h.Detector.Code) is { } resolved && !ReferenceEquals(resolved, h.Detector)
+                ? new DetectorHit(resolved, h.Count, h.Samples)
+                : new DetectorHit(h.Detector, h.Count, h.Samples))
             .OrderByDescending(h => h.Detector.Severity)
             .ThenBy(h => h.Detector.Code, StringComparer.Ordinal)
-            .Select(h => new DetectorHit(h.Detector, h.Count, h.Samples))
             .ToList();
 
         report.Kinds = DeriveKinds(report);
@@ -557,7 +573,11 @@ public static class ProjectReader
         return kinds.OrderBy(k => k, StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    private static Bucket DeriveBucket(ProjectReport report)
+    /// <summary>
+    /// The bucket a project belongs in, given the findings it still has. Internal rather than private
+    /// so the scan engine can re-derive it after an allowlist removes a finding.
+    /// </summary>
+    internal static Bucket DeriveBucket(ProjectReport report)
     {
         if (report.Hits.Any(h => h.Detector.Severity == Severity.Blocker)) return Bucket.Red;
         if (report.Hits.Any(h => h.Detector.Severity == Severity.Warning)) return Bucket.Yellow;
@@ -568,9 +588,11 @@ public static class ProjectReader
     /// Records a finding. The occurrence is required: a finding with no location cannot be acted
     /// on, so there is deliberately no way to raise one.
     /// </summary>
-    private static void Raise(Dictionary<string, HitAccumulator> hits, string code, int count, Occurrence occurrence)
+    private static void Raise(
+        Dictionary<string, HitAccumulator> hits, string code, int count, Occurrence occurrence,
+        DetectorSet? detectors = null)
     {
-        var detector = DetectorCatalog.ById(code);
+        var detector = (detectors ?? DetectorSet.BuiltIn).ById(code);
         if (detector is null) return;
 
         if (!hits.TryGetValue(code, out var accumulator))

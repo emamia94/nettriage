@@ -38,7 +38,13 @@ public sealed class ScanBag
     /// Counts every reference to a qualified name. An exact match on the dotted name wins; only if
     /// there is none does it fall back to "the namespace is imported and the simple name appears".
     /// </summary>
-    public (int Count, Occurrence? First) Resolve(string qualified)
+    public (int Count, Occurrence? First) Resolve(string qualified) => ResolveInFiles(qualified, null);
+
+    /// <summary>
+    /// As <see cref="Resolve"/>, but only counts files accepted by <paramref name="fileFilter"/>.
+    /// Custom rules use this to scope themselves to a file glob.
+    /// </summary>
+    public (int Count, Occurrence? First) ResolveInFiles(string qualified, Func<string, bool>? fileFilter)
     {
         int total = 0;
         Occurrence? first = null;
@@ -54,6 +60,8 @@ public sealed class ScanBag
 
         foreach (var file in _files)
         {
+            if (fileFilter is not null && !fileFilter(file.Path)) continue;
+
             int count = 0;
             Occurrence? occ = null;
 
@@ -78,13 +86,16 @@ public sealed class ScanBag
         return (total, first);
     }
 
-    public (int Count, Occurrence? First) ResolveAny(IEnumerable<string> names)
+    public (int Count, Occurrence? First) ResolveAny(IEnumerable<string> names) =>
+        ResolveAnyWhere(names, null);
+
+    public (int Count, Occurrence? First) ResolveAnyWhere(IEnumerable<string> names, Func<string, bool>? fileFilter)
     {
         int total = 0;
         Occurrence? first = null;
         foreach (var name in names)
         {
-            var (count, occ) = Resolve(name);
+            var (count, occ) = ResolveInFiles(name, fileFilter);
             total += count;
             first ??= occ;
         }

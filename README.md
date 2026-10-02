@@ -58,8 +58,15 @@ network access at runtime.
 ## Usage
 
 ```bash
-nettriage scan <path> [options]
-nettriage detectors          # list every check with its rationale
+nettriage scan <path> [options]          # assess one solution, project or directory
+nettriage baseline save <path> [options] # record the current state, to gate on drift
+nettriage baseline show <file>           # summarise a recorded baseline
+nettriage estate <dir> [options]         # roll up many applications into one portfolio
+nettriage rules validate <file>          # check a custom rule file
+nettriage rules template [file]          # print a starter rule file
+nettriage license status                 # show licence state and features
+nettriage license install <file>         # install a licence file
+nettriage detectors                      # list every check with its rationale
 nettriage version
 nettriage help
 ```
@@ -71,13 +78,16 @@ directory, it walks the tree looking for projects.
 
 | Option | Meaning |
 | --- | --- |
-| `-f, --format <fmt>` | `console` (default), `json`, `markdown`, `html` |
+| `-f, --format <fmt>` | `console` (default), `json`, `markdown`, `html` — plus `xlsx` and `summary` with a licence |
 | `-o, --output <file>` | write the report to a file |
 | `-x, --exclude <glob>` | skip matching paths; repeatable |
 | `--fail-on <level>` | `none` (default), `red`, `yellow` — exit `2` when met |
-| `--max-findings <n>` | findings shown per project (default 8) |
+| `--max-findings <n>` | findings shown per project (default 6) |
 | `--no-color` | disable ANSI colour |
 | `-q, --quiet` | suppress the report on stdout |
+| `-r, --rules <file>` | apply a custom rule file — **licensed** |
+| `-b, --baseline <file>` | compare against a recorded baseline — **licensed** |
+| `--fail-on-new <level>` | `none` (default), `red`, `yellow`, `any` — exit `2` on new findings only — **licensed** |
 
 ### Exit codes
 
@@ -85,7 +95,34 @@ directory, it walks the tree looking for projects.
 | --- | --- |
 | `0` | scan completed |
 | `1` | bad arguments, or the path could not be read |
-| `2` | `--fail-on` threshold was met |
+| `2` | `--fail-on` or `--fail-on-new` threshold was met |
+| `3` | a licensed feature was requested without a valid licence |
+
+---
+
+## Free and licensed
+
+Everything that answers *"what is wrong with this application?"* is free, permanently, with no
+account and no network: all 33 detectors, sequencing, effort estimates, and console / JSON /
+Markdown / HTML output.
+
+The licensed edition answers the questions that come **after** that one. It is a single annual
+price per organisation, and it unlocks four things:
+
+| | What it does |
+| --- | --- |
+| **Baseline and drift gate** | `baseline save` records how many times each detector fired in each project. `scan --baseline … --fail-on-new red` then fails CI only on findings that are *new*. Without it, `--fail-on` is all-or-nothing, which on a large legacy estate means the gate is switched off on day one. |
+| **Estate roll-up** | `estate <dir>` scans many applications, gives each a stable identity derived from its git remote, and ranks them worst-first by risk. `--history <file>` appends a snapshot and shows the trend, so "is it getting better?" has an answer. |
+| **Custom rules** | `rules validate` and `-r <file>` add your own detectors using the same matching engine as the built-ins, override the severity of built-in ones, and allowlist findings with a reason and an expiry date. Suppressed findings are listed in the report, never dropped silently. |
+| **Organisation exports** | `--format xlsx` writes a filterable workbook (summary, projects, findings, sequence); `--format summary` writes a one-page executive brief. |
+
+The licence is a signed file verified locally against a public key compiled into the binary.
+There is no activation server, no phone-home, and no account — it works air-gapped. Free
+features are never gated: a lapsed licence returns the tool to the free behaviour, it does not
+stop it working.
+
+`nettriage license status` always exits `0`; use `nettriage license show <file>` when you want a
+non-zero exit for an invalid licence in a script.
 
 ---
 
@@ -236,7 +273,9 @@ quote**. Calibrate it against one real project before you commit to anything.
 ## Determinism and privacy
 
 - **No network calls, ever.** There is no `--online` flag in this version. Nothing is
-  uploaded, no telemetry, no licence check, no account.
+  uploaded, there is no telemetry and no account. The licence check is a signature
+  verification against a public key compiled into the binary: it reads one local file and
+  nothing else.
 - **No code execution.** It parses XML and scans text. It never builds, loads, or runs your
   assemblies.
 - **No model in the loop.** The same input produces byte-identical output, which is what
@@ -299,7 +338,7 @@ dotnet build NetTriage.slnx -c Release
 dotnet run --project src/NetTriage.Cli -- scan .
 ```
 
-Tests (62 of them, no network, no fixtures on disk):
+Tests (159 of them, no network, no fixtures on disk):
 
 ```bash
 dotnet run --project tests/NetTriage.Tests
@@ -311,12 +350,14 @@ dotnet run --project tests/NetTriage.Tests
 
 - Optional online enrichment (`--online`) that verifies each package's declared target
   frameworks against nuget.org, so "this dependency already abandoned .NET Framework" stops
-  being a manual check.
+  being a manual check. This belongs in the free edition: it is an answer to the same
+  question, and friction there would cost more than it earns.
 - A stable JSON schema version field, and a documented schema file.
 - Effort-model calibration notes from real migrations, published as a reference.
 
-Nothing here is a paid feature. If a paid tier ever exists it will unlock scale, not
-correctness.
+The paid features listed above unlock **scale, not correctness**: the same detectors, the same
+sequencing and the same effort model run in both editions. A lapsed licence takes the tool back
+to the free behaviour; it never produces a wrong answer.
 
 ---
 

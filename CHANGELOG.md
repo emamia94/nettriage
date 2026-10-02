@@ -3,6 +3,65 @@
 All notable changes to this project are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-10-02
+
+Adds the licensed edition. The free edition is unchanged and is not gated: the same detectors,
+sequencing, effort model and four text formats run with no licence, no account and no network.
+
+### Added
+
+- **Licensing** (`NetTriage.Core/Licensing`). Licences are signed files, verified locally against
+  a public key compiled into the binary, so they work air-gapped. ECDsa P-256 with SHA-256,
+  because Ed25519 does not exist in the .NET base class library. No activation server, no
+  telemetry. `license status`, `license show`, `license install`.
+- **Baseline and drift gate** (`Baseline`). `baseline save` records how many times each detector
+  fired in each project; `scan --baseline … --fail-on-new red|yellow|any` fails only on new
+  findings. The baseline stores counts and root-relative paths, so ordinary edits — including
+  ones that move every line number — do not invalidate it.
+- **Estate roll-up** (`Estate`). `estate <dir>` treats each topmost directory holding a solution
+  or project file as an application, gives it a stable identity derived from its git remote,
+  ranks the applications worst-first by a disclosed risk score, and rolls the numbers up.
+  `--history <file>` appends a snapshot and reports the trend. The history is local; there is no
+  server.
+- **Custom rules** (`Rules`). `-r <file>` adds customer-defined detectors using the same matching
+  engine as the built-ins, overrides the severity of built-in detectors, and allowlists findings
+  with a reason and an optional expiry date. Suppressed findings are listed in the report and an
+  expired entry stops applying and says so.
+- **Organisation exports** (`Reporting`). `--format xlsx` writes a filterable OOXML workbook with
+  no third-party dependency; `--format summary` writes a one-page executive brief.
+- **`GlobMatcher`**, a small glob engine supporting `*`, `**` and `?`, case-insensitive, treating
+  both separators as separators.
+- `tools/NetTriage.LicenseIssuer`, the publisher-side tool that mints licences. Kept in the
+  repository so the trust model is auditable; the private key is not.
+- 96 further tests (159 in total), covering signing, tampering, expiry, baseline diffing, rule
+  loading and application, estate identity and trend, and the workbook's XML.
+
+### Changed
+
+- `--format` gains `xlsx` and `summary`, both licensed.
+- Exit code `3` is now returned when a licensed feature is requested without a valid licence.
+- `--max-findings` default corrected to 6, which is what the CLI had always used.
+- `EstateOptions.Exclude` was accepted and documented but never applied; it now filters both the
+  application boundary and the projects inside each application.
+- Applying an allowlist now re-derives each project's bucket and the report summary, so
+  suppressing a project's only blocker moves it out of red instead of leaving a headline that
+  contradicts the findings list underneath it.
+- `BaselineStore` requires the format marker to be present in the file. `Baseline.Format` has a
+  default, so deserializing alone accepted any JSON object as an empty baseline — which would then
+  have reported every project as new.
+- A glob ending in `**` now matches everything under its prefix, including a file directly in it;
+  previously `src/Printing/**` did not match `src/Printing/Label.cs`.
+- An estate application whose directory is a generic container (`src`, `source`, `code`, …) is
+  named after its parent, so a repository is no longer called "src".
+
+### Notes
+
+- No network access, no telemetry, no account, still. The licence check reads one local file.
+- Free features are never gated: without a licence the tool falls back to the free behaviour
+  rather than refusing to run.
+
+---
+
 ## [0.1.0] - 2026-10-01
 
 First release. The scope is deliberately narrow: deterministic, offline triage.

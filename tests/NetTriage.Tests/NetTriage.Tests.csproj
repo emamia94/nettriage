@@ -11,6 +11,9 @@
     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
     <!-- .NET 10 SDK requires opting in to the new dotnet test / Microsoft.Testing.Platform experience. -->
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
+    <!-- The Microsoft.Testing.Platform packages ship resources in locales the SDK does not
+         recognise; the warning is about their packaging, not about this project. -->
+    <NoWarn>$(NoWarn);NETSDK1188</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

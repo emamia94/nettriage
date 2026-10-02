@@ -1,3 +1,6 @@
+using NetTriage.Core.Baseline;
+using NetTriage.Core.Rules;
+
 namespace NetTriage.Core;
 
 /// <summary>How much a finding hurts a migration.</summary>
@@ -36,7 +39,63 @@ public sealed record Detector(
     double EffortDays,
     IReadOnlyList<string> Names)
 {
+    /// <summary>"built-in" or "custom". Shown in reports so a reader knows where a finding came from.</summary>
+    public string Origin { get; init; } = OriginBuiltIn;
+
+    public const string OriginBuiltIn = "built-in";
+    public const string OriginCustom = "custom";
+
+    /// <summary>Custom rules only: restrict matching to source files matching this glob.</summary>
+    public string? FileGlob { get; init; }
+
+    /// <summary>Custom rules only: restrict the rule to projects matching this glob.</summary>
+    public string? ProjectGlob { get; init; }
+
+    public bool IsCustom => Origin == OriginCustom;
+
+    /// <summary>A copy with a different severity, used to apply customer overrides.</summary>
+    public Detector WithSeverity(Severity severity) => this with { Severity = severity };
+
     public override string ToString() => Code + " " + Title;
+}
+
+/// <summary>
+/// The detectors in force for one run: the built-in catalog, plus any the customer supplied.
+/// Keeping this per-run rather than static is what lets custom rules exist without leaking state
+/// between invocations.
+/// </summary>
+public sealed class DetectorSet
+{
+    private readonly Dictionary<string, Detector> _byCode;
+
+    public IReadOnlyList<Detector> All { get; }
+
+    public static DetectorSet BuiltIn { get; } = new(DetectorCatalog.All);
+
+    public DetectorSet(IEnumerable<Detector> detectors)
+    {
+        All = detectors.ToList();
+        _byCode = new Dictionary<string, Detector>(StringComparer.OrdinalIgnoreCase);
+        foreach (var detector in All)
+        {
+            // First definition wins, so a custom rule can never shadow a built-in one.
+            _byCode.TryAdd(detector.Code, detector);
+        }
+    }
+
+    public Detector? ById(string code) => _byCode.TryGetValue(code, out var d) ? d : null;
+
+    public bool Contains(string code) => _byCode.ContainsKey(code);
+
+    public DetectorSet With(IEnumerable<Detector> extra) => new(All.Concat(extra));
+
+    public DetectorSet WithOverrides(IReadOnlyDictionary<string, Severity> overrides)
+    {
+        if (overrides.Count == 0) return this;
+
+        return new DetectorSet(All.Select(d =>
+            overrides.TryGetValue(d.Code, out var severity) ? d.WithSeverity(severity) : d));
+    }
 }
 
 /// <summary>The aggregated result of one detector firing inside one project.</summary>
@@ -112,6 +171,15 @@ public sealed class ScanReport
     public List<DetectorHit> PortfolioFindings { get; set; } = new();
     public List<SequenceStep> Sequence { get; set; } = new();
     public ScanSummary Summary { get; set; } = new();
+
+    /// <summary>Customer-defined detectors that ran in this scan.</summary>
+    public List<Detector> CustomDetectors { get; set; } = new();
+
+    /// <summary>Findings removed by the rule file's allowlist, with the reason. Never silent.</summary>
+    public List<SuppressedFinding> Suppressed { get; set; } = new();
+
+    /// <summary>Present only when the scan was run against a recorded baseline.</summary>
+    public BaselineDiff? BaselineDiff { get; set; }
 }
 
 /// <summary>Support lifecycle for a target framework moniker.</summary>

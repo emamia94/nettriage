@@ -16,6 +16,14 @@ TestResults/
 *.nupkg
 *.snupkg
 
+## Licensing: private keys and issued licences must never be committed.
+## A baseline file is different: it belongs in the repository, which is the whole point of the
+## drift gate, so it is deliberately not listed here.
+*.pem
+nettriage-signing-private*
+nettriage-license.json
+.nettriage/
+
 ## Rider / VS Code
 .idea/
 .vscode/

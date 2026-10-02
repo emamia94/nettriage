@@ -70,6 +70,12 @@ public sealed class ConsoleReporter : IReporter
         sb.AppendLine($"  {Dim("Scanned   ")} {report.GeneratedAt.UtcDateTime:yyyy-MM-dd HH:mm} UTC");
         sb.AppendLine($"  {Dim("Projects  ")} {s.ProjectCount}   ·   {s.TotalSourceLines:N0} source lines in {s.TotalSourceFiles:N0} files");
         sb.AppendLine($"  {Dim("Mode      ")} offline, deterministic (no network calls)");
+
+        if (report.CustomDetectors.Count > 0)
+        {
+            sb.AppendLine($"  {Dim("Rules     ")} {report.CustomDetectors.Count} custom detector(s) applied");
+        }
+
         sb.AppendLine();
 
         // -- portfolio ------------------------------------------------------------------
@@ -92,6 +98,63 @@ public sealed class ConsoleReporter : IReporter
         sb.AppendLine($"  {Dim("Effort (heuristic)".PadRight(20))} {s.EffortLowDays:N0} - {s.EffortHighDays:N0} engineer-days" +
                       $"   (≈ {EffortModel.Humanize(s.EffortLowDays)} to {EffortModel.Humanize(s.EffortHighDays)} for one engineer)");
         sb.AppendLine();
+
+        // -- drift since the baseline -------------------------------------------------------
+        if (report.BaselineDiff is { } diff)
+        {
+            sb.AppendLine(Bold("SINCE BASELINE") +
+                          Dim($"  (recorded {diff.Baseline.CreatedAt.UtcDateTime:yyyy-MM-dd HH:mm} UTC)"));
+            sb.AppendLine($"  {Dim("New".PadRight(20))} {Red(diff.NewBlockers + " blocker(s)")}  ·  " +
+                          $"{Yellow(diff.NewWarnings + " warning(s)")}  ·  {diff.NewOccurrences} new occurrence(s)");
+            sb.AppendLine($"  {Dim("Resolved".PadRight(20))} {Green(diff.ResolvedOccurrences + " occurrence(s)")}");
+            sb.AppendLine();
+
+            if (diff.Regressions.Any())
+            {
+                sb.AppendLine(Bold("REGRESSIONS") + Dim("  (absent from the baseline - this is what a drift gate fails on)"));
+                foreach (var delta in diff.Regressions.Take(12))
+                {
+                    var marker = delta.Severity switch
+                    {
+                        Severity.Blocker => Red("B"),
+                        Severity.Warning => Yellow("W"),
+                        _ => Dim("i"),
+                    };
+                    sb.AppendLine($"  {marker} {Cyan(delta.Detector)}  {delta.Project}  " +
+                                  $"{Yellow("+" + delta.NewCount)}  {Dim($"(baseline {delta.BaselineCount} -> now {delta.CurrentCount})")}");
+                }
+
+                if (diff.Regressions.Count() > 12)
+                {
+                    sb.AppendLine($"  {Dim($"… and {diff.Regressions.Count() - 12} more")}");
+                }
+
+                sb.AppendLine();
+            }
+            else
+            {
+                sb.AppendLine($"  {Green("No regressions")} {Dim("- nothing new since the baseline.")}");
+                sb.AppendLine();
+            }
+        }
+
+        // -- suppressed by rules -------------------------------------------------------------
+        if (report.Suppressed.Count > 0)
+        {
+            sb.AppendLine(Bold("SUPPRESSED BY RULES") +
+                          Dim($"  ({report.Suppressed.Count} finding(s) removed by the allowlist)"));
+            foreach (var item in report.Suppressed.Take(10))
+            {
+                sb.AppendLine($"  {Dim("·")} {item.Detector}  {item.Project}  {Dim("- " + item.Reason)}");
+            }
+
+            if (report.Suppressed.Count > 10)
+            {
+                sb.AppendLine($"  {Dim($"… and {report.Suppressed.Count - 10} more")}");
+            }
+
+            sb.AppendLine();
+        }
 
         // -- blockers across the estate ---------------------------------------------------
         var blockers = report.Projects

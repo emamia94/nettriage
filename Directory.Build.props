@@ -1,0 +1,12 @@
+<Project>
+
+  <!--
+    The single source of truth for the version. The NuGet package, the assembly and
+    `nettriage version` all read it from here, so they cannot disagree: there is deliberately no
+    second copy of the version string anywhere in the source.
+  -->
+  <PropertyGroup>
+    <Version>0.2.0</Version>
+  </PropertyGroup>
+
+</Project>

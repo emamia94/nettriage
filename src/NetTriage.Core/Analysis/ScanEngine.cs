@@ -1,3 +1,6 @@
+using NetTriage.Core.Baseline;
+using NetTriage.Core.Rules;
+
 namespace NetTriage.Core.Analysis;
 
 public sealed class ScanOptions
@@ -5,6 +8,12 @@ public sealed class ScanOptions
     public required string Root { get; init; }
     public List<string> Exclude { get; init; } = new();
     public List<string> Warnings { get; } = new();
+
+    /// <summary>Customer rules for this run: custom detectors, severity overrides, allowlist.</summary>
+    public RuleSet Rules { get; init; } = RuleSet.Empty;
+
+    /// <summary>When supplied, the report gains a comparison against this recorded state.</summary>
+    public Baseline.Baseline? Baseline { get; init; }
 }
 
 /// <summary>Orchestrates discovery, per-project analysis, sequencing and roll-up.</summary>
@@ -26,6 +35,13 @@ public static class ScanEngine
             Online = false,
         };
 
+        // Customer rules extend the detector set for this run, and their severity overrides are
+        // applied before scanning so that effort estimates and buckets see the final severities.
+        var customDetectors = RuleLoader.ToDetectors(options.Rules);
+        var detectorSet = DetectorSet.BuiltIn
+            .With(customDetectors)
+            .WithOverrides(RuleLoader.ToOverrides(options.Rules));
+
         var projects = ProjectDiscovery.Discover(options.Root, options.Warnings)
             .Where(p => !IsExcluded(p, options))
             .ToList();
@@ -34,7 +50,7 @@ public static class ScanEngine
         {
             try
             {
-                report.Projects.Add(ProjectReader.Read(project, report.Root, options.Warnings));
+                report.Projects.Add(ProjectReader.Read(project, report.Root, options.Warnings, detectorSet));
             }
             catch (Exception ex)
             {
@@ -46,10 +62,21 @@ public static class ScanEngine
             .OrderBy(p => p.Path, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        report.CustomDetectors = customDetectors;
+
+        // Suppression runs before the roll-up so every number in the report already reflects it.
+        // Applying the allowlist also re-derives each project's bucket, so the summary below is right.
+        report.Suppressed = RuleApplication.Apply(report, options.Rules, options.Warnings);
+
         AddPortfolioFindings(report);
         report.Sequence = Sequencer.Build(report.Projects);
         report.Summary = Summarize(report);
         report.Warnings = options.Warnings;
+
+        if (options.Baseline is not null)
+        {
+            report.BaselineDiff = BaselineComparer.Compare(options.Baseline, report);
+        }
 
         return report;
     }
@@ -94,6 +121,13 @@ public static class ScanEngine
             }
         }
     }
+
+    /// <summary>
+    /// Recomputes the roll-up from the projects as they now stand. Callers that change findings
+    /// after a scan - applying an allowlist does - must call this, or the headline numbers in the
+    /// report will contradict the findings list underneath them.
+    /// </summary>
+    public static void Resummarize(ScanReport report) => report.Summary = Summarize(report);
 
     private static ScanSummary Summarize(ScanReport report)
     {

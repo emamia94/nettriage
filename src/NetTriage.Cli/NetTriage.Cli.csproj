@@ -13,7 +13,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>nettriage</ToolCommandName>
     <PackageId>NetTriage</PackageId>
-    <Version>0.1.0</Version>
+    <!-- No <Version> here: Directory.Build.props owns it. -->
     <Authors>Ema</Authors>
     <Description>Deterministic, offline triage for .NET Framework to modern .NET migrations. Finds WebForms, server-side WCF, .NET Remoting, AppDomain, Workflow Foundation, BinaryFormatter, EF6 and other porting blockers across an entire solution or estate, then sequences the work.</Description>
     <PackageTags>dotnet;migration;modernization;legacy;dotnet-framework;roslyn;triage;upgrade</PackageTags>
