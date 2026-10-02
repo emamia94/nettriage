@@ -90,8 +90,8 @@ Polar can call a webhook, and that would be faster. It is the wrong trade here:
 - **It self-heals.** If a webhook endpoint is down, Polar retries a bounded number of times and
   then gives up; the sale is lost until someone notices. A pull loop that was down for a day
   catches up on its next run, because the orders are still there.
-- **The latency is irrelevant.** A licence is an annual purchase; arriving in fifteen minutes
-  rather than fifteen seconds costs nothing.
+- **The latency is irrelevant.** A licence is an annual purchase; arriving a few minutes after the
+  payment rather than a few seconds after it costs nothing.
 
 ### What one run does
 
