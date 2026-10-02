@@ -125,7 +125,9 @@ internal sealed class SmtpMailSender : IMailSender
 
         using var client = new SmtpClient(smtp.Host, smtp.Port)
         {
-            EnableSsl = true,
+            // On 587 this negotiates STARTTLS; on 465 the same flag selects implicit TLS.
+            // Setting it false is only correct for a relay that genuinely wants plaintext.
+            EnableSsl = smtp.UseStartTls,
             DeliveryMethod = SmtpDeliveryMethod.Network,
             UseDefaultCredentials = false,
             Credentials = new NetworkCredential(smtp.User, _config.ReadSmtpPassword()),
