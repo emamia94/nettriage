@@ -2,6 +2,10 @@
 
 **Deterministic, offline triage for .NET Framework → modern .NET migrations.**
 
+[![NuGet](https://img.shields.io/nuget/v/NetTriage.svg?label=nuget)](https://www.nuget.org/packages/NetTriage)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/emamia94/nettriage/blob/main/LICENSE)
+[![CI](https://github.com/emamia94/nettriage/actions/workflows/ci.yml/badge.svg)](https://github.com/emamia94/nettriage/actions/workflows/ci.yml)
+
 Point it at a solution, a project, or a whole directory tree. It tells you which projects
 will actually fight you, why, how much of the work is architectural rather than mechanical,
 and what order to do them in.
@@ -332,7 +336,7 @@ The JSON schema is stable and camelCase; see `ScanReport` in `NetTriage.Core/Mod
 ## Building from source
 
 ```bash
-git clone https://github.com/<owner>/nettriage
+git clone https://github.com/emamia94/nettriage
 cd nettriage
 dotnet build NetTriage.slnx -c Release
 dotnet run --project src/NetTriage.Cli -- scan .
