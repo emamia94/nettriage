@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-10-02
+
+Packaging fix. No behaviour change; the detectors, the analysis and the licence format are
+untouched.
+
+### Fixed
+
+- The README pointed `git clone` at a placeholder owner, and the package declared no repository
+  URL, so nuget.org showed no link to the source. Both now name the published repository, and
+  the README carries NuGet, licence and CI badges.
+
 ## [0.2.0] - 2026-10-02
 
 Adds the licensed edition. The free edition is unchanged and is not gated: the same detectors,
