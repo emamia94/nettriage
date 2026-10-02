@@ -120,6 +120,11 @@ price per organisation, and it unlocks four things:
 | **Custom rules** | `rules validate` and `-r <file>` add your own detectors using the same matching engine as the built-ins, override the severity of built-in ones, and allowlist findings with a reason and an expiry date. Suppressed findings are listed in the report, never dropped silently. |
 | **Organisation exports** | `--format xlsx` writes a filterable workbook (summary, projects, findings, sequence); `--format summary` writes a one-page executive brief. |
 
+**How to buy it.** One annual price per organisation, bought directly here:
+<https://buy.polar.sh/polar_cl_MGVGWvv8HFviN8KlDW9ZsaqjHiT1u39CiDQj717EnZn>. The seller of record
+handles VAT, so there is nothing to add on your side. You get a signed licence file by email
+within minutes of paying, and renewals arrive the same way without anyone having to ask.
+
 The licence is a signed file verified locally against a public key compiled into the binary.
 There is no activation server, no phone-home, and no account — it works air-gapped. Free
 features are never gated: a lapsed licence returns the tool to the free behaviour, it does not

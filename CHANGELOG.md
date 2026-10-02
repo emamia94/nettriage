@@ -18,6 +18,16 @@ Vendor tooling only. Nothing in the shipped package changes.
 - `replay` and a `file` mail mode, so the whole pipeline can be rehearsed over recorded orders
   without contacting a customer or a mail server.
 
+## [0.2.2] - 2026-10-02
+
+Documentation fix. No behaviour change.
+
+### Fixed
+
+- The README described the licensed edition without ever saying where to buy it, so anyone
+  arriving from the package page had no way to reach the purchase. It now links to the checkout
+  and says what happens after paying.
+
 ## [0.2.1] - 2026-10-02
 
 Packaging fix. No behaviour change; the detectors, the analysis and the licence format are
